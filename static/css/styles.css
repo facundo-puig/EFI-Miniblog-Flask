@@ -1,0 +1,105 @@
+/* Reset y base */
+body { 
+  font-family: Arial, sans-serif; 
+  margin: 20px; 
+  background: #f7f7f7; 
+}
+
+/* Header */
+header { 
+  background: #333; 
+  color: white; 
+  padding: 10px; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+}
+
+/* Enlaces */
+nav a, .user-info a { 
+  color: inherit; 
+  margin-right: 15px; 
+  text-decoration: none; 
+}
+nav a:hover, .user-info a:hover { 
+  text-decoration: underline; 
+}
+.user-info a { 
+  color: #ccc; 
+  margin: 0 0 0 10px; 
+}
+
+/* Contenido principal */
+main { 
+  background: white; 
+  padding: 20px; 
+  border-radius: 5px; 
+}
+
+/* Mensajes flash */
+.flash { 
+  padding: 10px; 
+  margin-bottom: 15px; 
+  border-radius: 3px; 
+  border: 1px solid; 
+}
+.flash.success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+.flash.error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+.flash.info { background: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+
+/* Formularios */
+label { 
+  font-weight: bold; 
+  display: block; 
+  margin-bottom: 5px; 
+}
+
+input[type="text"], textarea, select[multiple] {
+  width: 100%;
+  max-width: 500px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+select[multiple] {
+  max-width: 400px;
+  height: 120px;
+  padding: 5px;
+  font-size: 14px;
+}
+
+select[multiple] option {
+  padding: 5px;
+  margin: 2px 0;
+}
+select[multiple] option:hover { background: #e3f2fd; }
+select[multiple] option:checked { background: #2196f3; color: white; }
+
+/* Botones */
+input[type="submit"], .btn {
+  padding: 10px 20px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+input[type="submit"]:hover, .btn:hover { background: #0056b3; }
+
+/* Utilidades */
+.help-text {
+  color: #666;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-bottom: 15px;
+}
+
+footer { 
+  margin-top: 30px; 
+  font-size: 0.9em; 
+  color: #555; 
+}

@@ -1,0 +1,23 @@
+{% extends 'layout.html' %}
+
+{% block title %}Inicio - MiniBlog{% endblock %}
+
+{% block content %}
+<h1>MiniBlog - Posts recientes</h1>
+
+<ul>
+  {% for post in posts %}
+  <li>
+    <a href="{{ url_for('ver_post', post_id=post.id) }}">{{ post.titulo }}</a>
+    <small>por {{ post.autor.nombre_usuario }} el {{ post.fecha_creacion.strftime('%Y-%m-%d') }}</small>
+    <br>
+    Categorías: 
+    {% for cat in post.categorias %}
+      {{ cat.nombre }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  </li>
+  {% else %}
+  <li>No hay posts aún.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

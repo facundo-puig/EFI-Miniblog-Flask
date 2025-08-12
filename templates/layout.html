@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}MiniBlog{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="{{ url_for('index') }}">Inicio</a>
+      {% if current_user %}
+        <a href="{{ url_for('nuevo_post') }}">Nuevo Post</a>
+      {% endif %}
+    </nav>
+    
+    <div class="user-info">
+      {% if current_user %}
+        Hola, {{ current_user.nombre_usuario }}
+        <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+      {% else %}
+        <a href="{{ url_for('login') }}">Iniciar sesión</a>
+        <a href="{{ url_for('register') }}">Registrarse</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="flash {{ category }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}
+
+    {% endblock %}
+  </main>
+
+  <footer>
+    MiniBlog - Proyecto Flask - 2025
+  </footer>
+</body>
+</html>

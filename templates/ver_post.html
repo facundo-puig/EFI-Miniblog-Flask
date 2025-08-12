@@ -1,0 +1,48 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ post.titulo }} - MiniBlog{% endblock %}
+
+{% block content %}
+<h1>{{ post.titulo }}</h1>
+<p>por {{ post.autor.nombre_usuario }} el {{ post.fecha_creacion.strftime('%Y-%m-%d %H:%M') }}</p>
+
+<div>
+  {{ post.contenido }}
+</div>
+
+<p><strong>Categorías:</strong>
+  {% for cat in post.categorias %}
+    {{ cat.nombre }}{% if not loop.last %}, {% endif %}
+  {% else %}
+    Sin categorías
+  {% endfor %}
+</p>
+
+<hr>
+<h2>Comentarios</h2>
+
+<ul>
+  {% for comentario in post.comentarios %}
+    <li><strong>{{ comentario.autor.nombre_usuario }}</strong> dijo:<br>
+    {{ comentario.texto }} <br>
+    <small>{{ comentario.fecha_creacion.strftime('%Y-%m-%d %H:%M') }}</small>
+    </li>
+  {% else %}
+    <li>No hay comentarios aún.</li>
+  {% endfor %}
+</ul>
+
+<hr>
+{% if current_user %}
+  <h3>Agregar comentario</h3>
+  <form method="post">
+    <textarea name="comentario" rows="3" cols="40" required></textarea><br>
+    <input type="submit" value="Enviar comentario">
+  </form>
+{% else %}
+  <p><a href="{{ url_for('login') }}">Inicia sesión</a> para agregar un comentario.</p>
+{% endif %}
+
+<br>
+<a href="{{ url_for('index') }}">&larr; Volver al inicio</a>
+{% endblock %}
