@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_migrate import Migrate
-from models import db, Usuario, Post, Comentario, Categoria
+from passlib.hash import bcrypt
+from models import db, User, UserCredential, Post, Comment, Category
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta"
@@ -13,8 +14,8 @@ migrate = Migrate(app, db)
 # Context processors
 @app.context_processor
 def inject_data():
-    current_user = Usuario.query.get(session.get('user_id')) if 'user_id' in session else None
-    return dict(current_user=current_user, categorias=Categoria.query.all())
+    current_user = User.query.get(session.get('user_id')) if 'user_id' in session else None
+    return dict(current_user=current_user, categories=Category.query.all())
 
 def require_login():
     if 'user_id' not in session:
@@ -23,33 +24,60 @@ def require_login():
 
 @app.route('/')
 def index():
-    return render_template('index.html', posts=Post.query.order_by(Post.fecha_creacion.desc()).all())
+    posts = Post.query.filter_by(is_published=True).order_by(Post.created_at.desc()).all()
+    return render_template('index.html', posts=posts)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user = Usuario.query.filter_by(nombre_usuario=request.form['username']).first()
-        if user and user.contraseña == request.form['password']:
-            session.update({'user_id': user.id, 'username': user.nombre_usuario})
-            flash('Login exitoso!', 'success')
-            return redirect(url_for('index'))
-        flash('Usuario o contraseña incorrectos', 'error')
+        user = User.query.filter_by(email=request.form['email']).first()
+        
+        # Verificar que el usuario existe y tiene credenciales
+        if user and user.credential:
+            # Verificar la contraseña con bcrypt
+            if bcrypt.verify(request.form['password'], user.credential.password_hash):
+                # Verificar que el usuario esté activo
+                if not user.is_active:
+                    flash('Usuario desactivado', 'error')
+                    return render_template('login.html')
+                
+                session.update({'user_id': user.id, 'username': user.name})
+                flash('Login exitoso!', 'success')
+                return redirect(url_for('index'))
+        
+        flash('Email o contraseña incorrectos', 'error')
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username, email, password = request.form['username'], request.form['email'], request.form['password']
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
         
-        if Usuario.query.filter_by(nombre_usuario=username).first():
+        # Verificar si el usuario ya existe
+        if User.query.filter_by(name=username).first():
             flash('El nombre de usuario ya existe', 'error')
-        elif Usuario.query.filter_by(correo=email).first():
+        elif User.query.filter_by(email=email).first():
             flash('El email ya está registrado', 'error')
         else:
-            db.session.add(Usuario(nombre_usuario=username, correo=email, contraseña=password))
+            # Crear el usuario
+            new_user = User(name=username, email=email)
+            db.session.add(new_user)
+            db.session.flush()  # Para obtener el ID del usuario
+            
+            # Crear las credenciales con la contraseña hasheada
+            password_hash = bcrypt.hash(password)
+            credentials = UserCredential(
+                user_id=new_user.id,
+                password_hash=password_hash
+            )
+            db.session.add(credentials)
             db.session.commit()
+            
             flash('Registro exitoso! Ya puedes iniciar sesión', 'success')
             return redirect(url_for('login'))
+    
     return render_template('register.html')
 
 @app.route('/logout')
@@ -65,22 +93,23 @@ def nuevo_post():
     
     if request.method == 'POST':
         post = Post(
-            titulo=request.form['titulo'],
-            contenido=request.form['contenido'],
-            usuario_id=session['user_id']
+            title=request.form['title'],
+            content=request.form['content'],
+            user_id=session['user_id']
         )
         
-        for cat_id in request.form.getlist('categorias[]'):
-            cat = Categoria.query.get(int(cat_id))
+        # Agregar categorías si se seleccionaron
+        for cat_id in request.form.getlist('categories[]'):
+            cat = Category.query.get(int(cat_id))
             if cat:
-                post.categorias.append(cat)
+                post.categories.append(cat)
         
         db.session.add(post)
         db.session.commit()
         flash("Post creado con éxito", "success")
         return redirect(url_for('index'))
     
-    return render_template('nuevo_post.html', categorias=Categoria.query.all())
+    return render_template('nuevo_post.html', categories=Category.query.all())
 
 @app.route('/post/<int:post_id>', methods=['GET', 'POST'])
 def ver_post(post_id):
@@ -90,11 +119,12 @@ def ver_post(post_id):
         if 'user_id' not in session:
             return require_login()
         
-        db.session.add(Comentario(
-            texto=request.form['comentario'],
-            usuario_id=session['user_id'],
+        new_comment = Comment(
+            text=request.form['comment'],
+            user_id=session['user_id'],
             post_id=post_id
-        ))
+        )
+        db.session.add(new_comment)
         db.session.commit()
         flash("Comentario agregado", "success")
         return redirect(url_for('ver_post', post_id=post_id))

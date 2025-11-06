@@ -4,36 +4,58 @@ from datetime import datetime
 db = SQLAlchemy()
 
 
-post_categoria = db.Table('post_categoria',
+post_category = db.Table('post_category',
     db.Column('post_id', db.Integer, db.ForeignKey('post.id'), primary_key=True),
-    db.Column('categoria_id', db.Integer, db.ForeignKey('categoria.id'), primary_key=True)
+    db.Column('category_id', db.Integer, db.ForeignKey('category.id'), primary_key=True)
 )
 
-class Usuario(db.Model):
+class User(db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    nombre_usuario = db.Column(db.String(64), unique=True, nullable=False)
-    correo = db.Column(db.String(120), unique=True, nullable=False)
-    contraseña = db.Column(db.String(128), nullable=False)
-    posts = db.relationship('Post', backref='autor', lazy=True)
-    comentarios = db.relationship('Comentario', backref='autor', lazy=True)
+    name = db.Column(db.String(64), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    posts = db.relationship('Post', backref='author', lazy=True)
+    comments = db.relationship('Comment', backref='author', lazy=True)
 
-class Categoria(db.Model):
+    # Campos Agregados (Punto 2)
+    role = db.Column(db.String(20), default='user', nullable=False) #admin, moderador, user
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Category(db.Model):
+    __tablename__ = 'category'
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(50), unique=True, nullable=False)
-    posts = db.relationship('Post', secondary=post_categoria, back_populates='categorias')
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    posts = db.relationship('Post', secondary=post_category, back_populates='categories')
 
 class Post(db.Model):
+    __tablename__ = 'post'
     id = db.Column(db.Integer, primary_key=True)
-    titulo = db.Column(db.String(100), nullable=False)
-    contenido = db.Column(db.Text, nullable=False)
-    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-    comentarios = db.relationship('Comentario', backref='post', lazy=True)
-    categorias = db.relationship('Categoria', secondary=post_categoria, back_populates='posts')
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    comments = db.relationship('Comment', backref='post', lazy=True)
+    categories = db.relationship('Category', secondary=post_category, back_populates='posts')
 
-class Comentario(db.Model):
+    # Campos Agregados (Punto 2)
+    is_published = db.Column(db.Boolean, default=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Comment(db.Model):
+    __tablename__ = 'comment'
     id = db.Column(db.Integer, primary_key=True)
-    texto = db.Column(db.Text, nullable=False)
-    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+
+    # Nuevo campo (Punto 2)
+    is_visible = db.Column(db.Boolean, default=True)
+
+class UserCredential(db.Model):
+    __tablename__ = "user_credential"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    user = db.relationship("User", backref=db.backref("credential", uselist=False))
