@@ -1,15 +1,31 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_migrate import Migrate
+from flask_jwt_extended import JWTManager
 from passlib.hash import bcrypt
+from datetime import timedelta
 from models import db, User, UserCredential, Post, Comment, Category
+
+from views import (
+    UserRegisterAPI, LoginAPI,
+    PostListAPI, PostDetailAPI,
+    CommentListAPI, CommentDetailAPI,
+    CategoryListAPI, CategoryDetailAPI,
+    UserListAPI, UserDetailAPI, UserRoleAPI,
+    StatsAPI
+)
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta"
 app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/miniblog"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+#jwt
+app.config['JWT_SECRET_KEY'] = 'jwt_clave_secreta'  
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
+
 db.init_app(app)
 migrate = Migrate(app, db)
+jwt = JWTManager(app)
 
 # Context processors
 @app.context_processor
@@ -130,6 +146,35 @@ def ver_post(post_id):
         return redirect(url_for('ver_post', post_id=post_id))
     
     return render_template('ver_post.html', post=post)
+
+#registro de rutas
+
+
+#autenticacion
+app.add_url_rule('/api/register', view_func=UserRegisterAPI.as_view('api_register'))
+app.add_url_rule('/api/login', view_func=LoginAPI.as_view('api_login'))
+
+#post
+app.add_url_rule('/api/posts', view_func=PostListAPI.as_view('api_posts'))
+app.add_url_rule('/api/posts/<int:post_id>', view_func=PostDetailAPI.as_view('api_post_detail'))
+
+#comentarios
+app.add_url_rule('/api/posts/<int:post_id>/comments', view_func=CommentListAPI.as_view('api_post_comments'))
+app.add_url_rule('/api/comments/<int:comment_id>', view_func=CommentDetailAPI.as_view('api_comment_detail'))
+
+#categorias
+app.add_url_rule('/api/categories', view_func=CategoryListAPI.as_view('api_categories'))
+app.add_url_rule('/api/categories/<int:category_id>', view_func=CategoryDetailAPI.as_view('api_category_detail'))
+
+#usuariosAdmin
+app.add_url_rule('/api/users', view_func=UserListAPI.as_view('api_users'))
+app.add_url_rule('/api/users/<int:user_id>', view_func=UserDetailAPI.as_view('api_user_detail'))
+app.add_url_rule('/api/users/<int:user_id>/role', view_func=UserRoleAPI.as_view('api_user_role'))
+
+
+#estadisticas
+app.add_url_rule('/api/stats', view_func=StatsAPI.as_view('api_stats'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)

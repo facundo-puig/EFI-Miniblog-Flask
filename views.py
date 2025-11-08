@@ -289,6 +289,15 @@ class UserDetailAPI(MethodView):
         user = User.query.get_or_404(user_id)
         return UserSchema().dump(user), 200
 
+    @jwt_required()
+    @role_required("admin")
+    def delete(self, user_id):
+        """Solo admin (desactivar usuario)"""
+        user = User.query.get_or_404(user_id)
+        user.is_active = False
+        db.session.commit()
+
+        return {"message": "Usuario desactivado"}, 200
 
 class UserRoleAPI(MethodView):
 
@@ -311,17 +320,6 @@ class UserRoleAPI(MethodView):
         return {"message": "Rol actualizado"}, 200
 
 
-class UserDeactivateAPI(MethodView):
-    
-    @jwt_required()
-    @role_required("admin")
-    def delete(self, user_id):
-        user = User.query.get_or_404(user_id)
-        user.is_active = False
-        db.session.commit()
-        
-        return {"message": "Usuario desactivado"}, 200
-    
 
 ####  ESTADÍSTICAS  ####
 
