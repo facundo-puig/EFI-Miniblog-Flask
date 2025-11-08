@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
-from passlib.hash import bcrypt
+from passlib.hash import bcrypt_sha256
 from datetime import timedelta
 from models import db, User, UserCredential, Post, Comment, Category
 
@@ -51,7 +51,7 @@ def login():
         # Verificar que el usuario existe y tiene credenciales
         if user and user.credential:
             # Verificar la contraseña con bcrypt
-            if bcrypt.verify(request.form['password'], user.credential.password_hash):
+            if bcrypt_sha256.verify(request.form['password'], user.credential.password_hash):
                 # Verificar que el usuario esté activo
                 if not user.is_active:
                     flash('Usuario desactivado', 'error')
@@ -83,7 +83,7 @@ def register():
             db.session.flush()  # Para obtener el ID del usuario
             
             # Crear las credenciales con la contraseña hasheada
-            password_hash = bcrypt.hash(password)
+            password_hash = bcrypt_sha256.hash(password)
             credentials = UserCredential(
                 user_id=new_user.id,
                 password_hash=password_hash
@@ -146,6 +146,7 @@ def ver_post(post_id):
         return redirect(url_for('ver_post', post_id=post_id))
     
     return render_template('ver_post.html', post=post)
+
 
 #registro de rutas
 

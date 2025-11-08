@@ -16,7 +16,7 @@
     
     <div class="user-info">
       {% if current_user %}
-        Hola, {{ current_user.nombre_usuario }}
+        Hola, {{ current_user.name }}
         <a href="{{ url_for('logout') }}">Cerrar sesión</a>
       {% else %}
         <a href="{{ url_for('login') }}">Iniciar sesión</a>

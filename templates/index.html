@@ -8,13 +8,17 @@
 <ul>
   {% for post in posts %}
   <li>
-    <a href="{{ url_for('ver_post', post_id=post.id) }}">{{ post.titulo }}</a>
-    <small>por {{ post.autor.nombre_usuario }} el {{ post.fecha_creacion.strftime('%Y-%m-%d') }}</small>
+    <a href="{{ url_for('ver_post', post_id=post.id) }}">{{ post.title }}</a>
+    <small>por {{ post.author.name }} el {{ post.created_at.strftime('%Y-%m-%d') }}</small>
     <br>
-    Categorías: 
-    {% for cat in post.categorias %}
-      {{ cat.nombre }}{% if not loop.last %}, {% endif %}
-    {% endfor %}
+    <strong>Categorías:</strong>
+    {% if post.categories %}
+      {% for cat in post.categories %}
+        {{ cat.name }}{% if not loop.last %}, {% endif %}
+      {% endfor %}
+    {% else %}
+      Sin categorías
+    {% endif %}
   </li>
   {% else %}
   <li>No hay posts aún.</li>

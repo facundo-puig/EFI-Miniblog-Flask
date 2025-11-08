@@ -1,42 +1,47 @@
 {% extends 'layout.html' %}
 
-{% block title %}{{ post.titulo }} - MiniBlog{% endblock %}
+{% block title %}{{ post.title }} - MiniBlog{% endblock %}
 
 {% block content %}
-<h1>{{ post.titulo }}</h1>
-<p>por {{ post.autor.nombre_usuario }} el {{ post.fecha_creacion.strftime('%Y-%m-%d %H:%M') }}</p>
+<h1>{{ post.title }}</h1>
+<p>por {{ post.author.name }} el {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
 
 <div>
-  {{ post.contenido }}
+  {{ post.content }}
 </div>
 
 <p><strong>Categorías:</strong>
-  {% for cat in post.categorias %}
-    {{ cat.nombre }}{% if not loop.last %}, {% endif %}
+  {% if post.categories %}
+    {% for cat in post.categories %}
+      {{ cat.name }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
   {% else %}
     Sin categorías
-  {% endfor %}
+  {% endif %}
 </p>
 
 <hr>
 <h2>Comentarios</h2>
 
 <ul>
-  {% for comentario in post.comentarios %}
-    <li><strong>{{ comentario.autor.nombre_usuario }}</strong> dijo:<br>
-    {{ comentario.texto }} <br>
-    <small>{{ comentario.fecha_creacion.strftime('%Y-%m-%d %H:%M') }}</small>
-    </li>
+  {% if post.comments %}
+    {% for comment in post.comments %}
+      <li>
+        <strong>{{ comment.author.name }}</strong> dijo:<br>
+        {{ comment.text }}<br>
+        <small>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+      </li>
+    {% endfor %}
   {% else %}
     <li>No hay comentarios aún.</li>
-  {% endfor %}
+  {% endif %}
 </ul>
 
 <hr>
 {% if current_user %}
   <h3>Agregar comentario</h3>
   <form method="post">
-    <textarea name="comentario" rows="3" cols="40" required></textarea><br>
+    <textarea name="comment" rows="3" cols="40" required></textarea><br>
     <input type="submit" value="Enviar comentario">
   </form>
 {% else %}

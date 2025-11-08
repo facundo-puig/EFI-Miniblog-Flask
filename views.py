@@ -2,7 +2,7 @@ from datetime import timedelta
 from flask import request, jsonify
 from marshmallow import ValidationError
 from flask.views import MethodView
-from passlib.hash import bcrypt
+from passlib.hash import bcrypt_sha256
 from flask_jwt_extended import (
     jwt_required,
     create_access_token,
@@ -11,8 +11,7 @@ from flask_jwt_extended import (
 )
 
 from functools import wraps
-from app import db
-from models import User, UserCredential, Post, Category, Comment
+from models import db, User, UserCredential, Post, Category, Comment
 from schemas import (
     UserSchema, RegisterSchema, LoginSchema,
     PostSchema, CommentSchema, CategorySchema
@@ -44,7 +43,7 @@ class UserRegisterAPI(MethodView):
         db.session.add(new_user)
         db.session.flush()
         
-        password_hash = bcrypt.hash(data['password'])
+        password_hash = bcrypt_sha256.hash(data['password'])
 
         credentials = UserCredential(
             user_id=new_user.id, 
@@ -66,7 +65,7 @@ class LoginAPI(MethodView):
         if not user or not user.credential:
             return {"error": "Credenciales inválidas"}, 401
         
-        if not bcrypt.verify(data["password"], user.credential.password_hash):
+        if not bcrypt_sha256.verify(data["password"], user.credential.password_hash):
             return {"error": "Credenciales inválidas"}, 401
         
         if not user.is_active:
@@ -81,7 +80,7 @@ class LoginAPI(MethodView):
         token = create_access_token(
             identity=identity, 
             additional_claims=additional_claims, 
-            expires_delta=timedelta(minutes=60)
+            expires_delta=timedelta(hours=24)
         )
 
         return jsonify(access_token=token), 200
@@ -190,6 +189,7 @@ class CommentListAPI(MethodView):
 
 class CommentDetailAPI(MethodView):
     
+    #Eliminar
     @jwt_required()
     @role_required("admin", "moderator", "user")
     def delete(self, comment_id):
@@ -204,6 +204,27 @@ class CommentDetailAPI(MethodView):
         db.session.delete(comment)
         db.session.commit()
         return {"message": "Comentario eliminado"}, 200
+    
+    # Editar
+    @jwt_required()
+    def put(self, comment_id):
+        # Editar solo comentarios propios
+        comment = Comment.query.get_or_404(comment_id)
+        user_id = int(get_jwt_identity())
+        
+        # Solo el autor puede editar su comentario
+        if comment.user_id != user_id:
+            return {"error": "No autorizado"}, 403
+        
+        try:
+            data = CommentSchema(partial=True).load(request.json)
+            if 'text' in data:
+                comment.text = data['text']
+            
+            db.session.commit()
+            return {"message": "Comentario actualizado"}, 200
+        except ValidationError as err:
+            return {"error": err.messages}, 400
     
 
 ####  CATEGORÍAS  ####
