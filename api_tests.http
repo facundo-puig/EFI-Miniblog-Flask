@@ -1,0 +1,268 @@
+### MiniBlog API - Tests
+### Archivo de prueba para REST Client (VS Code)
+# 1. Hacer login con el rol deseado (user, moderator, admin)
+# 2. Copiar el token que devuelve
+# 3. Reemplazar @token al inicio del archivo con el token copiado
+# 4. Click en "Send Request" sobre cada endpoint para probarlo
+
+
+
+@baseUrl = http://localhost:5000
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc2Mjg5MTg1NywianRpIjoiOGYwNzg4M2ItMzg4Ny00MjZmLWIxY2EtNjEwZGMyZmYzMWEzIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjgiLCJuYmYiOjE3NjI4OTE4NTcsImNzcmYiOiJiMGQ2YzhlYi04ZDZkLTQ2ZWItYThjNS1hODA5MWE4ZjRmZjAiLCJleHAiOjE3NjI5NzgyNTcsImVtYWlsIjoiYWRtaW5AYWRtaW4uY29tIiwicm9sZSI6ImFkbWluIiwibmFtZSI6ImFkbWluIn0.BLm5MdK5d0-bl3GlnZn6t87XLEhVSFG6qgCVYl7W0fE
+
+
+#############################################
+### 1. AUTENTICACIÓN
+#############################################
+
+### Registro - Usuario (Éxito)
+POST {{baseUrl}}/api/register
+Content-Type: application/json
+
+{
+  "username": "nuevo_usuario",
+  "email": "nuevo@example.com",
+  "password": "password123"
+}
+
+### Login - Usuario (Éxito)
+# @name login
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{
+  "email": "usuario@usuario.com",
+  "password": "usuario"
+}
+
+### Login - Moderador (Éxito)
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{
+  "email": "moderador@moderador.com",
+  "password": "moderador"
+}
+
+### Login - Admin (Éxito)
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{
+  "email": "admin@admin.com",
+  "password": "admin"
+}
+
+### Login - Credenciales Inválidas (Error)
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{
+  "email": "noexiste@example.com",
+  "password": "wrongpassword"
+}
+
+
+#############################################
+### 2. POSTS
+#############################################
+
+### Listar Posts - Público (Éxito)
+GET {{baseUrl}}/api/posts
+
+### Ver Post Específico - Público (Éxito)
+GET {{baseUrl}}/api/posts/4
+
+### Crear Post - Con autenticación (Éxito)
+POST {{baseUrl}}/api/posts
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Mi post de prueba",
+  "content": "Este es el contenido de mi post de prueba."
+}
+
+### Crear Post - Sin token (Error)
+POST {{baseUrl}}/api/posts
+Content-Type: application/json
+
+{
+  "title": "Post sin autenticación",
+  "content": "Este post debería fallar"
+}
+
+### Editar Post - Autor (Éxito)
+PUT {{baseUrl}}/api/posts/6
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Post editado",
+  "content": "Contenido actualizado del post"
+}
+
+### Editar Post - Usuario no autor (Error)
+# Usar token de otro usuario diferente al autor
+PUT {{baseUrl}}/api/posts/2
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Intento editar post ajeno",
+  "content": "Esto debería fallar"
+}
+
+### Eliminar Post - Autor o Admin (Éxito)
+DELETE {{baseUrl}}/api/posts/2
+Authorization: Bearer {{token}}
+
+
+#############################################
+### 3. COMENTARIOS
+#############################################
+
+### Listar Comentarios - Público (Éxito)
+GET {{baseUrl}}/api/posts/2/comments
+
+### Crear Comentario - Con autenticación (Éxito)
+POST {{baseUrl}}/api/posts/2/comments
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "text": "Este es un comentario de prueba sobre el post"
+}
+
+### Crear Comentario - Sin token (Error)
+POST {{baseUrl}}/api/posts/1/comments
+Content-Type: application/json
+
+{
+  "text": "Comentario sin autenticación"
+}
+
+### Editar Comentario - Autor (Éxito)
+PUT {{baseUrl}}/api/comments/8
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "text": "Comentario editado"
+}
+
+### Eliminar Comentario - Autor/Moderador/Admin (Éxito)
+DELETE {{baseUrl}}/api/comments/8
+Authorization: Bearer {{token}}
+
+
+#############################################
+### 4. CATEGORÍAS
+#############################################
+
+### Listar Categorías - Público (Éxito)
+GET {{baseUrl}}/api/categories
+
+### Crear Categoría - Moderador o Admin (Éxito)
+POST {{baseUrl}}/api/categories
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Tecnología"
+}
+
+### Crear Categoría - Usuario normal (Error)
+# Usar token de usuario con rol 'user'
+POST {{baseUrl}}/api/categories
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Categoría no permitida"
+}
+
+### Editar Categoría - Moderador o Admin (Éxito)
+PUT {{baseUrl}}/api/categories/6
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Tecnología Actualizada"
+}
+
+### Eliminar Categoría - Solo Admin (Éxito)
+DELETE {{baseUrl}}/api/categories/6
+Authorization: Bearer {{token}}
+
+### Eliminar Categoría - Moderador (Error)
+# Usar token de moderador
+DELETE {{baseUrl}}/api/categories/3
+Authorization: Bearer {{token}}
+
+
+#############################################
+### 5. GESTIÓN DE USUARIOS (ADMIN)
+#############################################
+
+### Listar Usuarios - Admin (Éxito)
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{token}}
+
+### Listar Usuarios - Usuario normal (Error)
+# Usar token de usuario con rol 'user'
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{token}}
+
+### Ver Perfil Propio (Éxito)
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+
+### Ver Perfil Ajeno - Usuario normal (Error)
+# Usuario intentando ver perfil de otro usuario
+GET {{baseUrl}}/api/users/2
+Authorization: Bearer {{token}}
+
+### Ver Perfil Ajeno - Admin (Éxito)
+# Admin puede ver cualquier perfil
+GET {{baseUrl}}/api/users/2
+Authorization: Bearer {{token}}
+
+### Cambiar Rol - Admin (Éxito)
+PATCH {{baseUrl}}/api/users/2/role
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "role": "moderator"
+}
+
+### Cambiar Rol - Usuario normal (Error)
+# Usar token de usuario con rol 'user'
+PATCH {{baseUrl}}/api/users/2/role
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "role": "admin"
+}
+
+### Desactivar Usuario - Admin (Éxito)
+DELETE {{baseUrl}}/api/users/3
+Authorization: Bearer {{token}}
+
+
+#############################################
+### 6. ESTADÍSTICAS
+#############################################
+
+### Ver Estadísticas - Moderador o Admin (Éxito)
+GET {{baseUrl}}/api/stats
+Authorization: Bearer {{token}}
+
+### Ver Estadísticas - Usuario normal (Error)
+# Usar token de usuario con rol 'user'
+GET {{baseUrl}}/api/stats
+Authorization: Bearer {{token}}
+
+
