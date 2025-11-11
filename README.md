@@ -17,7 +17,7 @@ cd EFI-Miniblog-Flask
 ### 2. Crear entorno virtual
 
 ```bash
-python -m venv venv
+python3 -m venv venv
 
 # Activar entorno virtual:
 source venv/bin/activate
@@ -31,24 +31,45 @@ pip install -r requirements.txt
 
 ### 4. Configurar base de datos
 
-Crear la base de datos en MySQL:
+Opción 1: Servicio mysql
+
+Crear la base de datos
 
 ```bash
 mysql -u root -p
 CREATE DATABASE miniblog;
 exit
 ```
+Importar el dump
 
-Si es necesario, editar la conexión en 'app.py':
+```bash
+mysql -u root -p miniblog < database_dump.sql
+```
 
-```python
-app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/miniblog"
+Opción 2: Si usás XAMPP
+
+Iniciar el servicio
+
+```bash
+sudo /opt/lampp/lampp start
+```
+
+Crear la base de datos
+
+```bash
+/opt/lampp/bin/mysql -u root -p -S /opt/lampp/var/mysql/mysql.sock -e "CREATE DATABASE miniblog;"
 ```
 
 Importar el dump
 
 ```bash
-mysql -u root -p miniblog < database_dump.sql
+/opt/lampp/bin/mysql -u root -p -S /opt/lampp/var/mysql/mysql.sock miniblog < database_dump.sql
+```
+
+Si es necesario, editar la conexión en 'app.py':
+
+```python
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/miniblog"
 ```
 
 ### 5. Ejecutar la app
