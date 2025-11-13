@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 from datetime import timedelta
 from models import db
 
@@ -13,8 +14,10 @@ from views import (
     StatsAPI
 )
 
-# DB config
 app = Flask(__name__)
+CORS(app)
+
+# DB config
 app.secret_key = "clave_secreta"
 app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/miniblog"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
