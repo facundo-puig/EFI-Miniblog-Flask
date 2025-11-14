@@ -175,6 +175,9 @@ class PostDetailAPI(MethodView):
         if not check_ownership(user_id, post.user_id):
             return {"error": "No autorizado"}, 403
         
+        # Borrar todos los comentarios del post
+        Comment.query.filter_by(post_id=post.id).delete(synchronize_session=False)
+
         db.session.delete(post)
         db.session.commit()
         return {"message": "Post eliminado"}, 200
